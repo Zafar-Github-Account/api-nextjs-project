@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Book {
   _id?: string;
@@ -8,21 +8,44 @@ interface Book {
   author: string;
 }
 
-export default function BookForm({ currentBook, onSave }: { currentBook?: Book; onSave: () => void }) {
+export default function BookForm({
+  currentBook,
+  onSave,
+}: {
+  currentBook?: Book;
+  onSave: () => void;
+}) {
   const [form, setForm] = useState<Book>(currentBook || { title: "", author: "" });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setForm(currentBook || { title: "", author: "" });
+  }, [currentBook]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    const method = form._id ? "PUT" : "POST";
-    await fetch("/api/books", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const method = form._id ? "PUT" : "POST";
+      const response = await fetch("/api/books", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    onSave();
-    setForm({ title: "", author: "" });
+      if (!response.ok) {
+        throw new Error(`Failed to ${method === "POST" ? "add" : "update"} book`);
+      }
+
+      onSave();
+      setForm({ title: "", author: "" });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("An error occurred. Palease try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,9 +66,29 @@ export default function BookForm({ currentBook, onSave }: { currentBook?: Book; 
         className="w-full p-2 border rounded"
         required
       />
-      <button type="submit" className="w-full bg-green-500 text-white p-2 rounded">
-        {form._id ? "Update" : "Add"} Book
-      </button>
+      <div className="flex space-x-4">
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`w-full p-2 rounded text-white ${
+            isLoading ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"
+          }`}
+        >
+          {isLoading ? "Submitting..." : form._id ? "Update" : "Add"} Book
+        </button>
+        {form._id && (
+          <button
+            type="button"
+            onClick={() => {
+              setForm({ title: "", author: "" });
+              onSave();
+            }}
+            className="w-full bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }
