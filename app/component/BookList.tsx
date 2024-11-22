@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 interface Book {
   _id: string;
@@ -8,11 +8,15 @@ interface Book {
   author: string;
 }
 
-export default function BookList({ onEdit }: { onEdit: (book: Book) => void }) {
+interface BookListProps {
+  onEdit: (book: Book) => void;
+}
+
+export default function BookList({ onEdit }: BookListProps) {
   const [books, setBooks] = useState<Book[]>([]);
 
   const fetchBooks = async () => {
-    const response = await fetch("/api/books");
+    const response = await fetch('/api/books');
     const data = await response.json();
     setBooks(data);
   };
@@ -22,7 +26,7 @@ export default function BookList({ onEdit }: { onEdit: (book: Book) => void }) {
   }, []);
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/books?id=${id}`, { method: "DELETE" });
+    await fetch(`/api/books?id=${id}`, { method: 'DELETE' });
     fetchBooks();
   };
 
